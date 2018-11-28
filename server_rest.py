@@ -65,6 +65,8 @@ class Create(Resource):
         }    
 
         app.logger.info("GameID: " + game_id)
+        if not os.path.exists(game_data_folder):
+            os.makedirs(game_data_folder)
         game_file_path = game_data_folder / str(game_id + ".json")
         with open(game_file_path, "w") as game_file:
             json.dump(game, game_file, sort_keys = True, indent = 4)
@@ -74,5 +76,5 @@ class Create(Resource):
 api.add_resource(User, "/<string:game_id>/<string:name>")
 api.add_resource(Create, "/create")
 
-
-app.run(debug=True)
+if __name__ == "__main__":
+    app.run(debug=True)
