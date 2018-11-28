@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 from flask_restful import Api, Resource, reqparse
 import random 
 import uuid
@@ -17,16 +17,17 @@ class User(Resource):
     def get(self, game_id, random):
         game_file_path = game_data_folder / str(game_id + ".json")
         if not os.path.isfile(game_file_path):
-            return "Game not found", 404
+            return output_html("Game not found", 404)
         with open(game_file_path) as f:
             game = json.load(f)
         if not "game_id" in game or not "relations" in game:
-            return "Game file invalid", 400            
+            return output_html("Game file invalid", 400) 
 
         for user in game["relations"]:
             if(random == user["random"]):
-                return "Hallo " + user["name"] + "! Du musst " + user["gift_to"] + " etwas wichteln.", 200
-        return "User not found", 404
+                text = "<center><h3>Hallo " + str(user["name"]) + "!</h3> Du musst <b>" + str(user["gift_to"]) + "</b> etwas wichteln.</center>"
+                return output_html(text, 200)
+        return output_html("User not found", 404)
 
 
 class Create(Resource):
@@ -90,6 +91,12 @@ class Create(Resource):
 class Default(Resource):
     def get(self):
         return "WichtelMat is running see documentation", 200
+
+
+def output_html(text, code, headers=None):
+    resp = Response(text, mimetype='text/html', headers=headers)
+    resp.status_code = code
+    return resp
 
 api.add_resource(User, "/<string:game_id>/<string:random>")
 api.add_resource(Create, "/create")
