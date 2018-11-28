@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import os.path
 import datetime
+import hashlib
 
 
 game_data_folder = Path("games")
@@ -13,7 +14,7 @@ app = Flask(__name__)
 api = Api(app)
 
 class User(Resource):
-    def get(self, game_id, name):
+    def get(self, game_id, random):
         game_file_path = game_data_folder / str(game_id + ".json")
         if not os.path.isfile(game_file_path):
             return "Game not found", 404
@@ -23,19 +24,21 @@ class User(Resource):
             return "Game file invalid", 400            
 
         for user in game["relations"]:
-            if(name == user["name"]):
-                return "Hallo " + name + "! Du musst " + user["gift_to"] + " etwas wichteln.", 200
+            if(random == user["random"]):
+                return "Hallo " + user["name"] + "! Du musst " + user["gift_to"] + " etwas wichteln.", 200
         return "User not found", 404
 
 
 class Create(Resource):
     def post(self):
         json_data = request.get_json(force=True)
+        host_url = json_data["host_url"]
         users = json_data["names"]
         not_allowed = json_data["not_allowed"]
         sender = users.copy()
         recievers = users.copy()
         relations = []
+
         for user in sender:
             remaining_recievers = recievers.copy() # alle die noch nicht gezogen wurden
             if user in remaining_recievers: # nicht selbst ziehen
@@ -43,6 +46,8 @@ class Create(Resource):
             if user in not_allowed: # regeln für nutzer prüfen
                 app.logger.info(user + ' can\'t be with ' + ', '.join(not_allowed[user]))
                 for not_allowed_reciever in not_allowed[user]: # alle die nichts von diesem nutzer bekommen sollen werden gelöscht
+                    if not not_allowed_reciever in users:
+                        return "Found user in relation thats not in names: " + not_allowed_reciever, 400
                     if not_allowed_reciever in remaining_recievers:
                         remaining_recievers.remove(not_allowed_reciever)
             if len(remaining_recievers) == 0: # möglicherweise unlösbar, oder zufällig falscher weg
@@ -51,8 +56,10 @@ class Create(Resource):
             reciever = random.choice(remaining_recievers)
             recievers.remove(reciever)
             app.logger.info(user + " ===> " + reciever)
+            random_uuid = uuid.uuid4().hex
             relation = {
                 "name": user,
+                "random": hashlib.sha256(random_uuid.encode('utf-8')).hexdigest(),
                 "gift_to": reciever
             }
             relations.append(relation)
@@ -71,10 +78,22 @@ class Create(Resource):
         with open(game_file_path, "w") as game_file:
             json.dump(game, game_file, sort_keys = True, indent = 4)
 
-        return game, 201
+        user_request_urls = {}
+        for relation in relations:
+            user_request_urls[relation["name"]] = str(host_url) + str(game_id) + "/" + relation["random"]
+        urls = {
+            "game_id": game_id,
+            "urls": user_request_urls
+        }
+        return urls, 201
       
-api.add_resource(User, "/<string:game_id>/<string:name>")
+class Default(Resource):
+    def get(self):
+        return "WichtelMat is running see documentation", 200
+
+api.add_resource(User, "/<string:game_id>/<string:random>")
 api.add_resource(Create, "/create")
+api.add_resource(Default, "/")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
