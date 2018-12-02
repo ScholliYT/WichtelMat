@@ -26,3 +26,6 @@ Beispiel: /4487891103134594895f558dbcb55787/9bc08e46afe1b6662716ecb75c08fa76995a
 
 ## Libs
 `pip3 install flask-restful`
+
+
+https://codeburst.io/this-is-how-easy-it-is-to-create-a-rest-api-8a25122ab1f3
