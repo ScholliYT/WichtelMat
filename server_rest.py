@@ -44,14 +44,14 @@ class Create(Resource):
             remaining_recievers = recievers.copy() # alle die noch nicht gezogen wurden
             if user in remaining_recievers: # nicht selbst ziehen
                 remaining_recievers.remove(user)
-            if user in not_allowed: # regeln für nutzer prüfen
+            if user in not_allowed: # regeln fuer nutzer pruefen
                 app.logger.info(user + ' can\'t be with ' + ', '.join(not_allowed[user]))
-                for not_allowed_reciever in not_allowed[user]: # alle die nichts von diesem nutzer bekommen sollen werden gelöscht
+                for not_allowed_reciever in not_allowed[user]: # alle die nichts von diesem nutzer bekommen sollen werden geloescht
                     if not not_allowed_reciever in users:
                         return "Found user in relation thats not in names: " + not_allowed_reciever, 400
                     if not_allowed_reciever in remaining_recievers:
                         remaining_recievers.remove(not_allowed_reciever)
-            if len(remaining_recievers) == 0: # möglicherweise unlösbar, oder zufällig falscher weg
+            if len(remaining_recievers) == 0: # moeglicherweise unloesbar, oder zufaellig falscher weg
                 app.logger.info("no recievers remaining")
                 return "Unsolved", 200
             reciever = random.choice(remaining_recievers)
