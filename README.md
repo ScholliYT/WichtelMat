@@ -1,6 +1,6 @@
 # WichtelMat
 
-Flask server zum erstellen von Wichtelbeziehungen
+REST API zum erstellen von komplexen Wichtelbeziehungen.
 
 ## Nutzung
 
